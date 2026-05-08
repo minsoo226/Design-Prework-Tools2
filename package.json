@@ -1,7 +1,7 @@
 {
   "name": "designprep",
   "version": "1.0.0",
-  "description": "디자인 사전작업 자동화 도구",
+  "type": "module",
   "engines": {
     "node": ">=18"
   }

@@ -49,6 +49,15 @@
     .left-panel { border-right:1px solid var(--border); display:flex; flex-direction:column; overflow:hidden; }
 
     /* API Key bar */
+    .apikey-bar { padding:10px 16px; border-bottom:1px solid var(--border); background:var(--surface2); display:flex; align-items:center; gap:8px; flex-shrink:0; }
+    .apikey-label { font-size:11px; font-weight:600; color:var(--muted); white-space:nowrap; letter-spacing:0.04em; text-transform:uppercase; }
+    .apikey-input-wrap { flex:1; position:relative; }
+    .apikey-input { width:100%; background:var(--surface); border:1px solid var(--border); border-radius:6px; color:var(--text); font-size:12px; font-family:monospace; padding:6px 30px 6px 10px; outline:none; transition:border-color 0.15s; box-sizing:border-box; }
+    .apikey-input:focus { border-color:var(--accent); }
+    .apikey-input::placeholder { color:var(--muted); font-family:inherit; }
+    .apikey-eye { position:absolute; right:8px; top:50%; transform:translateY(-50%); cursor:pointer; font-size:13px; color:var(--muted); user-select:none; }
+    .apikey-ok   { font-size:11px; white-space:nowrap; color:var(--green); }
+    .apikey-none { font-size:11px; white-space:nowrap; color:var(--muted); }
 
     .panel-header { padding:16px 24px 14px; border-bottom:1px solid var(--border); flex-shrink:0; }
     .panel-title { font-size:11px; font-weight:600; color:var(--muted); margin-bottom:3px; text-transform:uppercase; letter-spacing:0.06em; }
@@ -330,6 +339,17 @@
 <div class="app">
   <div class="left-panel">
 
+    <!-- API Key -->
+    <div class="apikey-bar">
+      <span class="apikey-label">Gemini API Key</span>
+      <div class="apikey-input-wrap">
+        <input class="apikey-input" id="apiKeyInput" type="password"
+          placeholder="AIza..." oninput="onApiKeyInput()" autocomplete="off" />
+        <span class="apikey-eye" onclick="toggleKeyVis()">👁</span>
+      </div>
+      <span id="apiKeyStatus" class="apikey-none">미입력</span>
+    </div>
+
     <div class="panel-header">
       <div class="panel-title">정책 문서 입력</div>
       <div class="panel-subtitle">텍스트 붙여넣기 또는 스크린샷 업로드</div>
@@ -468,6 +488,26 @@ function toggleTheme() {
   document.getElementById('themeToggle').textContent = isDark ? '🌙' : '☀️';
 }
 
+// ── API Key (localStorage) ──
+function onApiKeyInput() {
+  const val = document.getElementById('apiKeyInput').value.trim();
+  const el  = document.getElementById('apiKeyStatus');
+  if (val.startsWith('AIza')) {
+    el.textContent = '✓ 저장됨'; el.className = 'apikey-ok';
+    localStorage.setItem('dp_gemini_key', val);
+  } else {
+    el.textContent = val ? '형식 오류' : '미입력'; el.className = 'apikey-none';
+    localStorage.removeItem('dp_gemini_key');
+  }
+}
+function toggleKeyVis() {
+  const inp = document.getElementById('apiKeyInput');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+}
+window.addEventListener('DOMContentLoaded', () => {
+  const saved = localStorage.getItem('dp_gemini_key');
+  if (saved) { document.getElementById('apiKeyInput').value = saved; onApiKeyInput(); }
+});
 
 // ── Mode ──
 let currentMode = 'text';
@@ -598,6 +638,12 @@ function hide(id) { document.getElementById(id).style.display = 'none'; }
 
 // ── Analysis ──
 async function startAnalysis() {
+  const apiKey = localStorage.getItem('dp_gemini_key');
+  if (!apiKey) {
+    alert('Gemini API 키를 먼저 입력해주세요.');
+    document.getElementById('apiKeyInput').focus();
+    return;
+  }
   const hasText  = currentMode === 'text'  && document.getElementById('policyInput').value.trim();
   const hasImage = currentMode === 'image' && images.length > 0;
   if (!hasText && !hasImage) {
@@ -621,6 +667,86 @@ async function startAnalysis() {
 }
 
 async function callClaude() {
+  const apiKey = localStorage.getItem('dp_gemini_key');
+
+  // ── 샘플 데이터는 design_prework.html 참조 ──
+  if (false) return {
+    "features": [
+      {"icon":"🔗","title":"채널에 공유","tags":["핵심기능","2단계"],"desc":"오픈 채널의 보드 글을 다른 오픈 채널에 공유하는 기능입니다. 공유 시 코멘트를 추가할 수 있으며, 대상 채널 보드에 공유 카드가 새 글로 등록됩니다."},
+      {"icon":"🃏","title":"공유 카드","tags":["컴포넌트","보드"],"desc":"공유된 콘텐츠가 대상 채널 보드에 표시되는 카드 형태의 UI입니다. 공유자 프로필, 코멘트, 원본 미리보기, 원본 채널명을 포함하며 원본 변경사항이 즉시 반영됩니다."},
+      {"icon":"🛡️","title":"공유 권한 및 채널 규칙","tags":["정책","보안"],"desc":"오픈 채널 콘텐츠만 다른 오픈 채널로 공유 가능합니다. 잠긴 채널(멘토링/전문가 잠금ON/과정) 콘텐츠는 공유 불가하며, 동일 채널 중복 공유도 차단됩니다."},
+      {"icon":"🔄","title":"원본 동기화","tags":["실시간","연동"],"desc":"공유 카드의 원본 미리보기는 원본 변경 시 즉시 반영됩니다. 원본 삭제 또는 비공개 처리 시 '원본을 확인할 수 없습니다' 안내 문구로 대체됩니다."}
+    ],
+    "tasks": [
+      {"title":"공유 모달 UI 설계","desc":"대상 채널 검색/선택 목록, 코멘트 입력 영역, 공유하기 버튼으로 구성된 공유 모달 컴포넌트 설계. 원본 채널 숨김 및 오픈 채널만 노출 규칙 반영","cat":"UI설계","priority":"High"},
+      {"title":"공유 카드 컴포넌트 설계","desc":"공유자 프로필/이름, 공유 시각, 코멘트, 원본 미리보기(제목+내용일부+썸네일), 원본 채널명, 원본 보기 버튼으로 구성된 카드 컴포넌트 설계","cat":"컴포넌트","priority":"High"},
+      {"title":"공유 버튼 위치 및 진입점 정의","desc":"보드 글 목록 및 글 보기 화면에서의 공유 버튼 노출 위치 및 형태 정의. 파일/링크/댓글 탭에는 미노출 처리","cat":"UI설계","priority":"High"},
+      {"title":"원본 삭제/접근불가 상태 화면 설계","desc":"원본 글이 삭제되거나 접근 권한 없는 경우 공유 카드 내 표시 방식 설계. '원본을 확인할 수 없습니다' 상태 UI 처리","cat":"상태설계","priority":"Mid"},
+      {"title":"중복 공유 차단 안내 UI 설계","desc":"동일 원본을 동일 채널에 재공유 시도 시 노출되는 '이미 공유된 글입니다' 인라인 메시지 또는 토스트 설계","cat":"에러처리","priority":"Mid"},
+      {"title":"공유 카드 삭제 권한 UX 처리","desc":"공유자 본인/채널 관리자/EDMS 관리자만 삭제 가능. 삭제 버튼 노출 조건 및 삭제 확인 다이얼로그 설계","cat":"권한설계","priority":"Low"}
+    ],
+    "flows": [
+      {
+        "title":"채널에 공유 플로우 (F-6)","tag":"핵심 플로우","tagClass":"tag-purple",
+        "steps":[
+          {"name":"시작","desc":"A채널 보드 글에서 공유 버튼 클릭","nodeType":"start"},
+          {"name":"공유 모달 오픈","desc":"대상 채널 목록 표시 (원본 A채널 제외, 오픈 채널만)","nodeType":"step"},
+          {"name":"B채널 선택","desc":"공유할 대상 채널 선택 및 코멘트 입력(선택)","nodeType":"step"},
+          {"name":"중복 공유 체크","desc":"동일 원본·동일 대상 채널 공유 이력 확인","nodeType":"decision"},
+          {"name":"이미 공유됨 안내","desc":"'이미 공유된 글입니다' 안내 후 모달 유지","nodeType":"end-err"},
+          {"name":"B채널에 공유 카드 등록","desc":"대상 채널 보드에 공유 카드 새 글로 생성","nodeType":"step"},
+          {"name":"공유 완료","desc":"완료 화면 — A채널 유지 또는 B채널로 이동","nodeType":"end-ok"}
+        ],
+        "branches":["중복 이력 있음 → '이미 공유된 글입니다' 안내","중복 이력 없음 → 공유 카드 등록 후 완료","공유 완료 후 → A채널 유지 / B채널로 이동(선택)"]
+      },
+      {
+        "title":"원본 보기 접근 플로우","tag":"원본 접근","tagClass":"tag-blue",
+        "steps":[
+          {"name":"시작","desc":"공유 카드에서 '원본 보기' 클릭","nodeType":"start"},
+          {"name":"원본 채널 참여 여부 확인","desc":"클릭한 사용자의 원본 채널 참여 여부 체크","nodeType":"decision"},
+          {"name":"원본 글 상태 확인","desc":"원본 글이 삭제/비공개 여부 확인","nodeType":"decision"},
+          {"name":"원본 콘텐츠 노출","desc":"원본 채널 글로 정상 이동","nodeType":"end-ok"},
+          {"name":"접근 권한 없음 안내","desc":"'접근 권한이 없습니다' 안내 표시","nodeType":"end-err"},
+          {"name":"원본 없음 안내","desc":"'원본을 확인할 수 없습니다' 안내 표시","nodeType":"end-err"}
+        ],
+        "branches":["원본 채널 미참여 → 접근 권한 없음 안내","원본 글 삭제/비공개 → 원본 없음 안내","원본 채널 참여 + 글 정상 → 원본 콘텐츠 노출"]
+      }
+    ],
+    "screens": [
+      {"name":"보드 글 목록","entry":"채널 진입 > 보드 탭","states":["기본","공유 버튼 hover"],"cat":"보드","catClass":"tag-purple","designImplication":"각 글 카드에 공유 버튼 노출. 오버플로우 메뉴 또는 hover 시 노출 방식 결정 필요. 공유 카드 유형 구분 표시(배지 등)."},
+      {"name":"공유 모달","entry":"보드 글 > 공유 버튼 클릭","states":["채널 목록 로딩","채널 선택","코멘트 입력","공유하기 활성화"],"cat":"모달","catClass":"tag-blue","designImplication":"채널 검색 기능 필수. 원본 채널은 목록에서 숨김 처리. 오픈 채널만 표시. 코멘트 입력 선택사항 명확히 구분."},
+      {"name":"공유 카드 (보드 노출)","entry":"대상 채널 보드","states":["정상","원본 삭제됨","원본 채널 접근불가"],"cat":"보드","catClass":"tag-purple","designImplication":"공유 카드임을 일반 글과 시각적으로 구분(공유 아이콘, 출처 표시). 원본 미리보기 영역 클릭 시 원본 보기로 연결."},
+      {"name":"공유 완료 화면","entry":"공유하기 버튼 클릭 후","states":["완료"],"cat":"결과","catClass":"tag-green","designImplication":"'A채널로 돌아가기'와 '공유한 채널 보기(B채널)' 두 가지 CTA 제공. 어떤 채널에 공유됐는지 명확히 표시."},
+      {"name":"보드 글 상세","entry":"보드 글 클릭","states":["일반 글","공유 카드","원본 없음"],"cat":"보드","catClass":"tag-purple","designImplication":"공유 카드 상세 뷰에서 원본 출처(채널명) 상단 노출. 댓글/반응은 공유 카드 독립 영역에서 관리."},
+      {"name":"원본 접근 불가 안내","entry":"원본 보기 클릭 시 권한 없음","states":["미참여","원본 삭제"],"cat":"에러","catClass":"tag-amber","designImplication":"상황별 메시지 구분: 미참여('접근 권한이 없습니다') vs 삭제('원본을 확인할 수 없습니다'). 채널 참여 유도 CTA 고려."}
+    ],
+    "edge_cases": [
+      {"severity":"critical","title":"잠긴 채널 콘텐츠 공유 시도","desc":"멘토링, 전문가(잠금ON), 과정 채널의 글에서 공유 버튼을 노출하는 경우 정책 위반 가능성","cat":"권한","catClass":"tag-purple","design_perspective":"잠긴 채널에서는 공유 버튼 자체를 렌더링하지 않거나 비활성화 처리. 버튼 미노출이 더 깔끔한 UX."},
+      {"severity":"high","title":"중복 공유 차단 타이밍","desc":"공유 모달을 열어둔 상태에서 다른 탭에서 이미 동일 채널에 공유한 경우, 모달에서 이를 실시간으로 감지 못할 수 있음","cat":"동시성","catClass":"tag-purple","design_perspective":"공유하기 버튼 클릭 시점에 서버에서 중복 여부 최종 확인. 모달 내 실시간 상태 갱신보다 제출 시점 검증이 현실적."},
+      {"severity":"high","title":"원본 글 수정 중 공유 카드 불일치","desc":"원본 글이 수정되는 동안 공유 카드를 조회하면 구버전과 신버전이 혼재될 수 있음","cat":"동기화","catClass":"tag-amber","design_perspective":"즉시 반영 정책에 따라 캐싱 전략 주의 필요. 로딩 중 스켈레톤 UI로 전환 구간 처리 권장."},
+      {"severity":"high","title":"공유 대상 채널 목록이 비어있는 경우","desc":"사용자가 참여 중인 오픈 채널이 원본 채널 하나뿐인 경우 공유 가능한 채널 목록이 없음","cat":"빈상태","catClass":"tag-amber","design_perspective":"채널 목록 Empty State 설계 필수. '공유할 수 있는 채널이 없습니다. 새 채널에 참여해보세요.' + 채널 탐색 링크 제공."},
+      {"severity":"medium","title":"공유 카드 삭제 후 원본 글 존재","desc":"공유 카드가 삭제되어도 원본 글은 유지됨. 사용자가 삭제 후 원본도 삭제되는 것으로 오해할 수 있음","cat":"정책이해","catClass":"tag-blue","design_perspective":"삭제 확인 다이얼로그에 '공유 카드만 삭제되며 원본 글은 유지됩니다' 명확히 안내."},
+      {"severity":"medium","title":"코멘트 없이 공유 시 카드 레이아웃","desc":"코멘트가 선택 항목이므로 코멘트 없이 공유된 카드의 레이아웃이 어색해질 수 있음","cat":"레이아웃","catClass":"tag-blue","design_perspective":"코멘트 영역은 있을 때만 표시(조건부 렌더링). 없을 때 공백이 생기지 않도록 컴포넌트 설계."}
+    ],
+    "critical_review": {
+      "immediate": [
+        "공유 모달 컴포넌트 설계 착수 — 채널 목록 필터링(오픈채널만, 원본채널 제외) 규칙을 UI에 어떻게 반영할지 결정",
+        "공유 카드 컴포넌트의 '일반 글'과의 시각적 구분 방식 확정 (배지, 아이콘, 배경색 등)",
+        "원본 삭제/접근불가 상태별 메시지 문구 및 대체 UI 초안 작성"
+      ],
+      "clarifications": [
+        {"issue":"공유 버튼 노출 위치 미정","question":"보드 글 목록에서 공유 버튼을 항상 노출하나요, 아니면 hover/더보기 메뉴에 숨기나요?","impact":"글 목록 카드 UI 레이아웃 구조 전체에 영향"},
+        {"issue":"공유 카드의 댓글/반응 수 표시 여부 불명확","question":"공유 카드에 달린 댓글/반응 수를 목록에서 표시하나요? 원본의 댓글 수와 합산하지 않는다는 것이 맞나요?","impact":"보드 글 목록 카드 내 메타 정보 표시 설계에 필요"},
+        {"issue":"공유 완료 후 B채널 이동 방식 미정","question":"'공유한 채널 보기' 클릭 시 현재 탭에서 이동하나요, 새 탭으로 여나요?","impact":"공유 완료 화면 CTA 버튼 설계 방향 결정에 필요"}
+      ],
+      "design_traps": [
+        {"area":"공유 카드 원본 미리보기 동기화","concern":"원본이 자주 수정되는 경우 공유 카드 미리보기가 계속 바뀌어 공유자가 의도한 맥락이 달라질 수 있음","impact":"공유 시점 스냅샷 vs 실시간 동기화 간 UX 트레이드오프 — 기획팀과 재확인 필요"},
+        {"area":"채널 목록 스크롤 성능","concern":"참여 채널 수가 많을 경우 공유 모달의 채널 목록이 매우 길어질 수 있음","impact":"가상 스크롤 또는 검색 우선 UI 고려 필요. 기본 정렬 기준(최근 활동순 등)도 결정해야 함"},
+        {"area":"재공유 방지 UX","concern":"재공유(❌)가 정책상 불가하지만 공유 카드에서 공유 버튼이 노출될 경우 사용자 혼란 발생","impact":"공유 카드 글 타입에서는 공유 버튼 자체를 숨기는 것이 가장 명확한 처리"}
+      ]
+    }
+  };
+
   const system = `당신은 UI/UX 디자인 전문가입니다. 주어진 정책 문서를 분석하여 디자인 사전작업에 필요한 정보를 추출해주세요.
 반드시 아래 JSON 형식으로만 응답하세요. 추가 설명이나 마크다운 없이 순수 JSON만 반환하세요.
 
@@ -655,31 +781,39 @@ async function callClaude() {
   }
 }`;
 
-  let content;
+  // Gemini 직접 호출
+  let parts = [];
   if (currentMode === 'image') {
-    content = [
-      ...images.map(img => ({ type:'image', source:{ type:'base64', media_type:img.mediaType, data:img.base64 } })),
-      { type:'text', text:'이 컨플루언스 정책 문서 스크린샷을 분석해주세요.' }
+    parts = [
+      ...images.map(img => ({ inlineData: { mimeType: img.mediaType, data: img.base64 } })),
+      { text: '이 컨플루언스 정책 문서 스크린샷을 분석해주세요.' }
     ];
   } else {
-    content = [{ type:'text', text:`다음 정책 문서를 분석해주세요:\n\n${document.getElementById('policyInput').value}` }];
+    parts = [{ text: `다음 정책 문서를 분석해주세요:\n\n${document.getElementById('policyInput').value}` }];
   }
 
-  const resp = await fetch('/api/analyze', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model:'claude-opus-4-5', max_tokens:4096, system, messages:[{ role:'user', content }] })
-  });
+  const resp = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        system_instruction: { parts: [{ text: system }] },
+        contents: [{ role: 'user', parts }],
+        generationConfig: { maxOutputTokens: 4096, temperature: 0.7 }
+      })
+    }
+  );
 
   if (!resp.ok) {
     const err = await resp.json().catch(() => ({}));
-    if (resp.status === 401) throw new Error('API 키가 올바르지 않습니다. 키를 다시 확인해주세요.');
+    if (resp.status === 400) throw new Error('API 키가 올바르지 않습니다. 키를 다시 확인해주세요.');
     if (resp.status === 429) throw new Error('요청 한도를 초과했습니다. 잠시 후 다시 시도해주세요.');
     throw new Error(err.error?.message || `API 오류 (${resp.status})`);
   }
 
   const json = await resp.json();
-  const raw  = json.content[0].text.trim();
+  const raw  = json.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
   const m    = raw.match(/\{[\s\S]*\}/);
   if (!m) throw new Error('응답을 파싱하지 못했습니다. 다시 시도해주세요.');
   return JSON.parse(m[0]);
