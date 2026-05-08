@@ -58,6 +58,10 @@
     .apikey-eye { position:absolute; right:8px; top:50%; transform:translateY(-50%); cursor:pointer; font-size:13px; color:var(--muted); user-select:none; }
     .apikey-ok   { font-size:11px; white-space:nowrap; color:var(--green); }
     .apikey-none { font-size:11px; white-space:nowrap; color:var(--muted); }
+    .apikey-registered { display:flex; align-items:center; gap:8px; flex:1; }
+    .apikey-registered-text { font-size:12px; color:var(--green); font-weight:500; }
+    .apikey-change-btn { font-size:11px; color:var(--muted); background:none; border:1px solid var(--border); border-radius:5px; padding:3px 8px; cursor:pointer; }
+    .apikey-change-btn:hover { color:var(--text); border-color:var(--border2); }
 
     .panel-header { padding:16px 24px 14px; border-bottom:1px solid var(--border); flex-shrink:0; }
     .panel-title { font-size:11px; font-weight:600; color:var(--muted); margin-bottom:3px; text-transform:uppercase; letter-spacing:0.06em; }
@@ -341,13 +345,19 @@
 
     <!-- API Key -->
     <div class="apikey-bar">
-      <span class="apikey-label">Gemini API Key</span>
-      <div class="apikey-input-wrap">
+      <span class="apikey-label">API Key</span>
+      <!-- 미등록 상태 -->
+      <div id="apikeyInputArea" class="apikey-input-wrap">
         <input class="apikey-input" id="apiKeyInput" type="password"
-          placeholder="AIza..." oninput="onApiKeyInput()" autocomplete="off" />
+          placeholder="Gemini API Key (AIza...)" oninput="onApiKeyInput()" autocomplete="off" />
         <span class="apikey-eye" onclick="toggleKeyVis()">👁</span>
       </div>
       <span id="apiKeyStatus" class="apikey-none">미입력</span>
+      <!-- 등록 완료 상태 -->
+      <div id="apikeyRegistered" class="apikey-registered" style="display:none">
+        <span class="apikey-registered-text">🔑 Key 등록 완료</span>
+        <button class="apikey-change-btn" onclick="changeApiKey()">변경</button>
+      </div>
     </div>
 
     <div class="panel-header">
@@ -493,12 +503,29 @@ function onApiKeyInput() {
   const val = document.getElementById('apiKeyInput').value.trim();
   const el  = document.getElementById('apiKeyStatus');
   if (val.startsWith('AIza')) {
-    el.textContent = '✓ 저장됨'; el.className = 'apikey-ok';
+    el.textContent = ''; el.className = 'apikey-ok';
     localStorage.setItem('dp_gemini_key', val);
+    // 등록 완료 UI로 전환
+    setTimeout(() => showKeyRegistered(), 600);
   } else {
     el.textContent = val ? '형식 오류' : '미입력'; el.className = 'apikey-none';
     localStorage.removeItem('dp_gemini_key');
   }
+}
+function showKeyRegistered() {
+  document.getElementById('apikeyInputArea').style.display = 'none';
+  document.getElementById('apiKeyStatus').style.display   = 'none';
+  document.getElementById('apikeyRegistered').style.display = 'flex';
+}
+function changeApiKey() {
+  document.getElementById('apikeyInputArea').style.display = '';
+  document.getElementById('apiKeyStatus').style.display    = '';
+  document.getElementById('apikeyRegistered').style.display = 'none';
+  document.getElementById('apiKeyInput').value = '';
+  document.getElementById('apiKeyStatus').textContent = '미입력';
+  document.getElementById('apiKeyStatus').className  = 'apikey-none';
+  localStorage.removeItem('dp_gemini_key');
+  document.getElementById('apiKeyInput').focus();
 }
 function toggleKeyVis() {
   const inp = document.getElementById('apiKeyInput');
@@ -506,7 +533,10 @@ function toggleKeyVis() {
 }
 window.addEventListener('DOMContentLoaded', () => {
   const saved = localStorage.getItem('dp_gemini_key');
-  if (saved) { document.getElementById('apiKeyInput').value = saved; onApiKeyInput(); }
+  if (saved) {
+    document.getElementById('apiKeyInput').value = saved;
+    showKeyRegistered();
+  }
 });
 
 // ── Mode ──
@@ -793,7 +823,7 @@ async function callClaude() {
   }
 
   const resp = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
