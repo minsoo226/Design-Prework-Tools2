@@ -846,7 +846,13 @@ async function callClaude() {
     const msg = err.error?.message || '';
     if (resp.status === 400 && msg.includes('API_KEY')) throw new Error('API 키가 올바르지 않습니다. 키를 다시 확인해주세요.');
     if (resp.status === 400 && msg.includes('not found')) throw new Error('모델을 찾을 수 없습니다. 잠시 후 다시 시도해주세요.');
-    if (resp.status === 429) throw new Error('요청 한도 초과입니다. 1분 후 다시 시도해주세요. (무료 티어: 분당 15회 제한)');
+    if (resp.status === 429) {
+      const detail = msg || 'quota exceeded';
+      if (detail.toLowerCase().includes('day') || detail.includes('일일') || detail.includes('daily')) {
+        throw new Error('오늘 무료 할당량을 모두 사용했습니다. 내일 다시 시도해주세요.\n(무료 티어: 일일 요청 한도 초과)');
+      }
+      throw new Error('요청 한도 초과입니다. 잠시 후 다시 시도해주세요.\n상세: ' + (msg || '분당/일일 요청 한도 초과'));
+    }
     throw new Error(msg || `API 오류 (${resp.status})`);
   }
 
