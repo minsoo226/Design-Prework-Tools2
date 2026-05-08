@@ -823,7 +823,7 @@ async function callClaude() {
   }
 
   const resp = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -838,7 +838,7 @@ async function callClaude() {
   if (!resp.ok) {
     const err = await resp.json().catch(() => ({}));
     if (resp.status === 400) throw new Error('API 키가 올바르지 않습니다. 키를 다시 확인해주세요.');
-    if (resp.status === 429) throw new Error('요청 한도를 초과했습니다. 잠시 후 다시 시도해주세요.');
+    if (resp.status === 429) throw new Error('무료 API 요청 한도 초과입니다. 1분 후 다시 시도해주세요. (무료 티어: 분당 15회 제한)');
     throw new Error(err.error?.message || `API 오류 (${resp.status})`);
   }
 
