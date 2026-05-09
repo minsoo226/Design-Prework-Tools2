@@ -502,7 +502,7 @@ function toggleTheme() {
 function onApiKeyInput() {
   const val = document.getElementById('apiKeyInput').value.trim();
   const el  = document.getElementById('apiKeyStatus');
-  if (val.startsWith('AIza')) {
+  if (val.startsWith('gsk_')) {
     el.textContent = ''; el.className = 'apikey-ok';
     localStorage.setItem('dp_groq_key', val);
     // 등록 완료 UI로 전환
