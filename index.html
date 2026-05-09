@@ -349,7 +349,7 @@
       <!-- 미등록 상태 -->
       <div id="apikeyInputArea" class="apikey-input-wrap">
         <input class="apikey-input" id="apiKeyInput" type="password"
-          placeholder="Gemini API Key (AIza...)" oninput="onApiKeyInput()" autocomplete="off" />
+          placeholder="Groq API Key (gsk_...)" oninput="onApiKeyInput()" autocomplete="off" />
         <span class="apikey-eye" onclick="toggleKeyVis()">👁</span>
       </div>
       <span id="apiKeyStatus" class="apikey-none">미입력</span>
@@ -504,12 +504,12 @@ function onApiKeyInput() {
   const el  = document.getElementById('apiKeyStatus');
   if (val.startsWith('AIza')) {
     el.textContent = ''; el.className = 'apikey-ok';
-    localStorage.setItem('dp_gemini_key', val);
+    localStorage.setItem('dp_groq_key', val);
     // 등록 완료 UI로 전환
     setTimeout(() => showKeyRegistered(), 600);
   } else {
     el.textContent = val ? '형식 오류' : '미입력'; el.className = 'apikey-none';
-    localStorage.removeItem('dp_gemini_key');
+    localStorage.removeItem('dp_groq_key');
   }
 }
 function showKeyRegistered() {
@@ -524,7 +524,7 @@ function changeApiKey() {
   document.getElementById('apiKeyInput').value = '';
   document.getElementById('apiKeyStatus').textContent = '미입력';
   document.getElementById('apiKeyStatus').className  = 'apikey-none';
-  localStorage.removeItem('dp_gemini_key');
+  localStorage.removeItem('dp_groq_key');
   document.getElementById('apiKeyInput').focus();
 }
 function toggleKeyVis() {
@@ -532,7 +532,7 @@ function toggleKeyVis() {
   inp.type = inp.type === 'password' ? 'text' : 'password';
 }
 window.addEventListener('DOMContentLoaded', () => {
-  const saved = localStorage.getItem('dp_gemini_key');
+  const saved = localStorage.getItem('dp_groq_key');
   if (saved) {
     document.getElementById('apiKeyInput').value = saved;
     showKeyRegistered();
@@ -668,9 +668,9 @@ function hide(id) { document.getElementById(id).style.display = 'none'; }
 
 // ── Analysis ──
 async function startAnalysis() {
-  const apiKey = localStorage.getItem('dp_gemini_key');
+  const apiKey = localStorage.getItem('dp_groq_key');
   if (!apiKey) {
-    alert('Gemini API 키를 먼저 입력해주세요.');
+    alert('Groq API 키를 먼저 입력해주세요.');
     document.getElementById('apiKeyInput').focus();
     return;
   }
@@ -697,7 +697,7 @@ async function startAnalysis() {
 }
 
 async function callClaude() {
-  const apiKey = localStorage.getItem('dp_gemini_key');
+  const apiKey = localStorage.getItem('dp_groq_key');
 
   // ── 샘플 데이터는 design_prework.html 참조 ──
   if (false) return {
@@ -811,7 +811,7 @@ async function callClaude() {
   }
 }`;
 
-  // Gemini 직접 호출 — system + user 를 단일 메시지로 합침
+  // Groq API 호출
   let userText = '';
   if (currentMode === 'image') {
     userText = '이 컨플루언스 정책 문서 스크린샷을 분석해주세요.';
@@ -819,24 +819,24 @@ async function callClaude() {
     userText = `다음 정책 문서를 분석해주세요:\n\n${document.getElementById('policyInput').value}`;
   }
 
-  let parts = [];
-  if (currentMode === 'image') {
-    parts = [
-      ...images.map(img => ({ inlineData: { mimeType: img.mediaType, data: img.base64 } })),
-      { text: system + '\n\n' + userText }
-    ];
-  } else {
-    parts = [{ text: system + '\n\n' + userText }];
-  }
+  const messages = [
+    { role: 'system', content: system },
+    { role: 'user', content: userText }
+  ];
 
   const resp = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${apiKey}`,
+    'https://api.groq.com/openai/v1/chat/completions',
     {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
       body: JSON.stringify({
-        contents: [{ role: 'user', parts }],
-        generationConfig: { maxOutputTokens: 4096, temperature: 0.7 }
+        model: 'llama-3.3-70b-versatile',
+        messages,
+        max_tokens: 4096,
+        temperature: 0.7
       })
     }
   );
@@ -844,20 +844,13 @@ async function callClaude() {
   if (!resp.ok) {
     const err = await resp.json().catch(() => ({}));
     const msg = err.error?.message || '';
-    if (resp.status === 400 && msg.includes('API_KEY')) throw new Error('API 키가 올바르지 않습니다. 키를 다시 확인해주세요.');
-    if (resp.status === 400 && msg.includes('not found')) throw new Error('모델을 찾을 수 없습니다. 잠시 후 다시 시도해주세요.');
-    if (resp.status === 429) {
-      const detail = msg || 'quota exceeded';
-      if (detail.toLowerCase().includes('day') || detail.includes('일일') || detail.includes('daily')) {
-        throw new Error('오늘 무료 할당량을 모두 사용했습니다. 내일 다시 시도해주세요.\n(무료 티어: 일일 요청 한도 초과)');
-      }
-      throw new Error('요청 한도 초과입니다. 잠시 후 다시 시도해주세요.\n상세: ' + (msg || '분당/일일 요청 한도 초과'));
-    }
+    if (resp.status === 401) throw new Error('API 키가 올바르지 않습니다. 키를 다시 확인해주세요.');
+    if (resp.status === 429) throw new Error('요청 한도 초과입니다. 잠시 후 다시 시도해주세요.');
     throw new Error(msg || `API 오류 (${resp.status})`);
   }
 
   const json = await resp.json();
-  const raw  = json.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
+  const raw  = json.choices?.[0]?.message?.content?.trim() || '';
   const m    = raw.match(/\{[\s\S]*\}/);
   if (!m) throw new Error('응답을 파싱하지 못했습니다. 다시 시도해주세요.');
   return JSON.parse(m[0]);
