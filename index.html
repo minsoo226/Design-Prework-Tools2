@@ -192,7 +192,7 @@
 
     /* ── Tasks Tab ── */
     .task-group { margin-bottom:20px; }
-    .task-group-header { display:flex; align-items:center; gap:8px; margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid var(--border); }
+    .task-group-header { display:flex; align-items:center; gap:8px; margin-bottom:8px; padding-bottom:6px; }
     .task-group-title { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--muted); }
     .task-group-count { font-size:10px; font-weight:700; padding:1px 7px; border-radius:10px; background:var(--surface3); color:var(--text2); }
     .task-progress { margin-left:auto; font-size:11px; color:var(--muted); font-weight:500; }
@@ -223,11 +223,12 @@
     .flow-diagram-wrap { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:20px; overflow-x:auto; position:relative; }
     .flow-copy-btn { position:absolute; top:10px; right:10px; padding:5px 11px; border-radius:6px; font-size:11px; font-weight:600; background:var(--accent-soft); border:1px solid rgba(97,85,224,0.25); color:var(--accent); cursor:pointer; opacity:0; transition:opacity 0.15s; white-space:nowrap; z-index:10; }
     .flow-diagram-wrap:hover .flow-copy-btn { opacity:1; }
-    .flow-row { display:flex; align-items:center; min-width:max-content; gap:0; }
-    .fn-rect { padding:8px 14px; border-radius:8px; font-size:12px; font-weight:500; text-align:center; border:1.5px solid; min-width:90px; white-space:nowrap; }
-    .fn-oval { padding:7px 16px; border-radius:999px; font-size:12px; font-weight:600; border:1.5px solid; white-space:nowrap; text-align:center; }
-    .fn-diamond-wrap { display:flex; flex-direction:column; align-items:center; }
-    .fn-diamond { width:64px; height:64px; transform:rotate(45deg); border:1.5px solid; display:flex; align-items:center; justify-content:center; border-radius:5px; }
+    .flow-row { display:flex; align-items:center; min-width:max-content; gap:0; flex-wrap:nowrap; }
+    .flow-node { display:flex; align-items:center; flex-shrink:0; }
+    .fn-rect { padding:8px 14px; border-radius:8px; font-size:12px; font-weight:500; text-align:center; border:1.5px solid; min-width:90px; white-space:nowrap; line-height:1.4; }
+    .fn-oval { padding:7px 16px; border-radius:999px; font-size:12px; font-weight:600; border:1.5px solid; white-space:nowrap; text-align:center; line-height:1.4; }
+    .fn-diamond-wrap { display:flex; align-items:center; justify-content:center; }
+    .fn-diamond { width:60px; height:60px; transform:rotate(45deg); border:1.5px solid; display:flex; align-items:center; justify-content:center; border-radius:5px; flex-shrink:0; }
     .fn-diamond-text { transform:rotate(-45deg); font-size:10px; font-weight:600; text-align:center; line-height:1.3; white-space:nowrap; }
     .fn-start   { background:var(--accent-soft); border-color:var(--accent); color:var(--accent2); }
     .fn-step    { background:var(--surface2); border-color:var(--border2); color:var(--text); }
@@ -235,7 +236,7 @@
     .fn-end-ok  { background:var(--green-soft); border-color:var(--green); color:var(--green); }
     .fn-end-err { background:var(--red-soft); border-color:var(--red); color:var(--red); }
     .fn-end-wait{ background:var(--blue-soft); border-color:var(--blue); color:var(--blue); }
-    .arr-h { width:28px; height:2px; background:var(--border2); position:relative; flex-shrink:0; }
+    .arr-h { width:32px; height:2px; background:var(--border2); position:relative; flex-shrink:0; align-self:center; }
     .arr-h::after { content:''; position:absolute; right:-1px; top:-4px; border:5px solid transparent; border-left-color:var(--border2); }
     .flow-branch-box { background:var(--amber-soft); border:1px solid rgba(217,119,6,0.2); border-radius:8px; padding:10px 14px; margin-top:10px; font-size:12px; }
     .flow-branch-box-label { font-size:10px; font-weight:700; color:var(--amber); letter-spacing:0.05em; text-transform:uppercase; margin-bottom:4px; }
@@ -804,7 +805,10 @@ async function callClaude() {
       "type": "modal|list|detail|bottomsheet|toast|card|form",
       "components": ["상단 구성요소 설명", "중단 구성요소 설명", "하단 구성요소 설명"],
       "states": ["상태명: 설명"],
-      "notes": ["레이아웃 설계 시 주의사항 또는 UX 제안"]
+      "notes": ["레이아웃 설계 시 주의사항 또는 UX 제안"],
+      "wireframe": [
+        {"zone": "영역명(예: 상단바, 콘텐츠, CTA버튼)", "height": "tall|medium|short|auto", "desc": "이 영역에 표시되는 UI 요소 한줄 설명", "style": "header|content|input|button|list|divider|badge"}
+      ]
     }
   ],
   "critical_review": {
@@ -901,8 +905,8 @@ function renderSummary(features, cr) {
   }
 
   // Feature cards
-  document.getElementById('summary-cards').innerHTML = `<div style="font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);margin:20px 0 10px">기능 목록</div>` + features.map(f => `
-    <div style="display:flex;gap:12px;padding:14px 0;border-bottom:1px solid var(--border)">
+  document.getElementById('summary-cards').innerHTML = `<div style="font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);margin:20px 0 10px">기능 목록</div>` + features.map((f, fi) => `
+    <div style="display:flex;gap:12px;padding:14px 0;${fi < features.length-1 ? 'border-bottom:1px solid var(--border);' : ''}">
       <div style="font-size:20px;flex-shrink:0;margin-top:1px">${e(f.icon)||'📋'}</div>
       <div>
         <div style="font-size:14px;font-weight:600;margin-bottom:4px">${e(f.title)}</div>
@@ -918,16 +922,16 @@ function renderSummary(features, cr) {
     document.getElementById('review-green-block').innerHTML = cr.immediate?.length ? `
       <div style="margin-bottom:20px">
         <div style="font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--green);margin-bottom:8px">즉시 착수 가능</div>
-        ${cr.immediate.map(item => `
-          <div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;color:var(--text2);line-height:1.6">${e(item)}</div>`).join('')}
+        ${cr.immediate.map((item, ii) => `
+          <div style="padding:8px 0;${ii<cr.immediate.length-1?'border-bottom:1px solid var(--border);':''}font-size:13px;color:var(--text2);line-height:1.6">${e(item)}</div>`).join('')}
       </div>` : '';
 
     // Amber: clarifications
     document.getElementById('review-amber-block').innerHTML = cr.clarifications?.length ? `
       <div style="margin-bottom:20px">
         <div style="font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--amber);margin-bottom:8px">확인 필요</div>
-        ${cr.clarifications.map(c => `
-          <div style="padding:10px 0;border-bottom:1px solid var(--border)">
+        ${cr.clarifications.map((c, ci) => `
+          <div style="padding:10px 0;${ci<cr.clarifications.length-1?'border-bottom:1px solid var(--border);':''}">
             <div style="font-size:13px;font-weight:600;margin-bottom:4px">${e(c.issue)}</div>
             <div style="font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:3px">${e(c.question)}</div>
             <div style="font-size:11px;color:var(--muted)">영향: ${e(c.impact)}</div>
@@ -938,8 +942,8 @@ function renderSummary(features, cr) {
     document.getElementById('review-red-block').innerHTML = cr.design_traps?.length ? `
       <div style="margin-bottom:20px">
         <div style="font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--red);margin-bottom:8px">주의 구간</div>
-        ${cr.design_traps.map(t => `
-          <div style="padding:10px 0;border-bottom:1px solid var(--border)">
+        ${cr.design_traps.map((t, ti) => `
+          <div style="padding:10px 0;${ti<cr.design_traps.length-1?'border-bottom:1px solid var(--border);':''}">
             <div style="font-size:13px;font-weight:600;margin-bottom:4px">${e(t.area)}</div>
             <div style="font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:3px">${e(t.concern)}</div>
             <div style="font-size:11px;color:var(--red)">영향: ${e(t.impact)}</div>
@@ -1007,9 +1011,9 @@ function renderFlows(flows) {
   const nc = t => ({start:'fn-start',step:'fn-step',decision:'fn-branch','end-ok':'fn-end-ok','end-err':'fn-end-err','end-wait':'fn-end-wait'}[t]||'fn-step');
   const nodeEl = (s) => {
     const cls = nc(s.nodeType);
-    if (s.nodeType==='decision') return `<div class="fn-diamond-wrap"><div class="fn-diamond ${cls}"><div class="fn-diamond-text">${e(s.name)}</div></div></div>`;
-    if (['start','end-ok','end-err','end-wait'].includes(s.nodeType)) return `<div class="fn-oval ${cls}">${e(s.name)}</div>`;
-    return `<div class="fn-rect ${cls}">${e(s.name)}</div>`;
+    if (s.nodeType==='decision') return `<div class="flow-node fn-diamond-wrap"><div class="fn-diamond ${cls}"><div class="fn-diamond-text">${e(s.name)}</div></div></div>`;
+    if (['start','end-ok','end-err','end-wait'].includes(s.nodeType)) return `<div class="flow-node fn-oval ${cls}">${e(s.name)}</div>`;
+    return `<div class="flow-node fn-rect ${cls}">${e(s.name)}</div>`;
   };
   const arr = `<div class="arr-h"></div>`;
   document.getElementById('flow-content').innerHTML = flows.map((f, fi) => `
@@ -1094,7 +1098,7 @@ function renderEdge(edges) {
 
   document.getElementById('edge-content').innerHTML = order.filter(sev => groups[sev].length > 0).map(sev => `
     <div class="edge-severity-group">
-      <div style="font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:${lc(sev)};margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border)">${labels[sev]}</div>
+      <div style="font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:${lc(sev)};margin-bottom:8px;padding-bottom:2px">${labels[sev]}</div>
       <div class="edge-list">
         ${groups[sev].map(ed => `
           <div class="edge-item">
@@ -1121,6 +1125,31 @@ function renderLayout(layouts) {
   }
 
   const typeLabel = { modal:'모달', list:'목록', detail:'상세', bottomsheet:'바텀시트', toast:'토스트', card:'카드', form:'폼' };
+  const zoneH = h => ({tall:'56px', medium:'40px', short:'28px', auto:'auto'}[h]||'36px');
+  const zoneStyle = s => ({
+    header:  'background:var(--surface3);border-bottom:1px solid var(--border2);',
+    content: 'background:var(--surface2);',
+    input:   'background:var(--surface);border:1px dashed var(--border2);border-radius:6px;margin:6px 10px;',
+    button:  'background:var(--accent-soft);border:1px solid rgba(97,85,224,0.3);border-radius:8px;margin:6px 10px;',
+    list:    'background:var(--surface);border-bottom:1px solid var(--border);',
+    divider: 'background:var(--border);height:1px !important;min-height:1px;',
+    badge:   'background:var(--surface3);border-radius:4px;margin:4px 10px;',
+  }[s]||'background:var(--surface2);');
+
+  const buildWireframe = (wf) => {
+    if (!wf || wf.length === 0) return '';
+    return `
+      <div style="margin-bottom:18px">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin-bottom:10px">레이아웃 시안</div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:var(--shadow);max-width:320px">
+          ${wf.map(z => `
+            <div style="min-height:${zoneH(z.height)};${zoneStyle(z.style)}display:flex;align-items:center;padding:0 14px;position:relative;">
+              <div style="font-size:11px;color:var(--muted);line-height:1.4">${e(z.desc)}</div>
+              ${z.zone ? `<div style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:9px;font-weight:700;color:var(--border2);text-transform:uppercase;letter-spacing:0.04em">${e(z.zone)}</div>` : ''}
+            </div>`).join('')}
+        </div>
+      </div>`;
+  };
 
   const tabs = layouts.map((l, i) => `<div class="wf-tab ${i===0?'active':''}" onclick="switchWfDyn(this,'wf-dyn-${i}')">${e(l.screen)}</div>`).join('');
   const panels = layouts.map((l, i) => `
@@ -1129,28 +1158,33 @@ function renderLayout(layouts) {
         <span style="font-size:13px;font-weight:600">${e(l.screen)}</span>
         ${l.type ? `<span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:4px;background:var(--accent-soft);color:var(--accent2)">${typeLabel[l.type]||e(l.type)}</span>` : ''}
       </div>
-      ${(l.components||[]).length ? `
-        <div style="margin-bottom:16px">
-          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin-bottom:8px">구성 요소</div>
-          ${l.components.map((c,ci) => `
-            <div style="display:flex;gap:10px;padding:9px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;margin-bottom:5px;font-size:13px;color:var(--text2)">
-              <span style="font-size:10px;font-weight:700;color:var(--accent);flex-shrink:0;margin-top:2px;width:14px;text-align:right">${ci+1}</span>
-              <span>${e(c)}</span>
-            </div>`).join('')}
-        </div>` : ''}
-      ${(l.states||[]).length ? `
-        <div style="margin-bottom:16px">
-          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin-bottom:8px">화면 상태</div>
-          <div style="display:flex;flex-wrap:wrap;gap:6px">
-            ${l.states.map(s=>`<span style="padding:4px 12px;border-radius:20px;font-size:12px;background:var(--surface2);border:1px solid var(--border);color:var(--text2)">${e(s)}</span>`).join('')}
-          </div>
-        </div>` : ''}
-      ${(l.notes||[]).length ? `
+      <div style="display:grid;grid-template-columns:auto 1fr;gap:24px;align-items:start">
+        <div>${buildWireframe(l.wireframe)}</div>
         <div>
-          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin-bottom:8px">설계 메모</div>
-          ${l.notes.map(n => `
-            <div style="display:flex;gap:8px;padding:8px 12px;border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 7px 7px 0;margin-bottom:6px;font-size:12px;color:var(--text2);line-height:1.6">${e(n)}</div>`).join('')}
-        </div>` : ''}
+          ${(l.components||[]).length ? `
+            <div style="margin-bottom:16px">
+              <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin-bottom:8px">구성 요소</div>
+              ${l.components.map((c,ci) => `
+                <div style="display:flex;gap:10px;padding:8px 0;${ci<l.components.length-1?'border-bottom:1px solid var(--border);':''}font-size:13px;color:var(--text2)">
+                  <span style="font-size:10px;font-weight:700;color:var(--accent);flex-shrink:0;margin-top:2px;width:14px">${ci+1}</span>
+                  <span>${e(c)}</span>
+                </div>`).join('')}
+            </div>` : ''}
+          ${(l.states||[]).length ? `
+            <div style="margin-bottom:16px">
+              <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin-bottom:8px">화면 상태</div>
+              <div style="display:flex;flex-wrap:wrap;gap:6px">
+                ${l.states.map(s=>`<span style="padding:4px 12px;border-radius:20px;font-size:12px;background:var(--surface2);border:1px solid var(--border);color:var(--text2)">${e(s)}</span>`).join('')}
+              </div>
+            </div>` : ''}
+          ${(l.notes||[]).length ? `
+            <div>
+              <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin-bottom:8px">설계 메모</div>
+              ${l.notes.map(n => `
+                <div style="padding:8px 12px;border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 7px 7px 0;margin-bottom:6px;font-size:12px;color:var(--text2);line-height:1.6">${e(n)}</div>`).join('')}
+            </div>` : ''}
+        </div>
+      </div>
     </div>`).join('');
 
   document.getElementById('layout-content').innerHTML = `
