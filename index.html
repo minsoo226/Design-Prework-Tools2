@@ -1165,26 +1165,7 @@ function switchWfDyn(el, id) {
   document.getElementById(id).classList.add('active');
 }
 
-// ── Layout (legacy stub) ──
-function _unusedLegacyLayout() {
-  document.getElementById('layout-content').innerHTML = `
-    <div class="wf-section-tabs">
-      <div class="wf-tab active">-</div>
-    </div>
-    <div class="wf-panel active" id="wf-list">
-      <div class="wf-frame">
-        <div class="wf-topbar"><div><div class="wf-topbar-title">교육 신청</div><div class="wf-topbar-sub">총 12개 교육</div></div><div class="wf-icon-btn">🔍</div></div>
-        <div class="wf-search">🔍 <span>교육명 또는 카테고리 검색</span></div>
-        <div class="wf-filter-row"><div class="wf-filter-chip on">전체</div><div class="wf-filter-chip">리더십</div><div class="wf-filter-chip">직무 역량</div><div class="wf-filter-chip">신청 가능</div></div>
-        <div class="wf-course-card"><div class="wf-course-badge" style="background:var(--accent-soft);color:var(--accent2)">리더십</div><div class="wf-course-title">2026 리더십 교육 과정</div><div class="wf-course-meta">📅 2026.05.12 ~ 05.14 · 📍 연수원 1관</div><div class="wf-progress-wrap"><div class="wf-progress-bar" style="width:72%;background:var(--accent)"></div></div><div class="wf-progress-label"><span>18/25명</span><span style="color:var(--accent)">신청 가능</span></div></div>
-        <div class="wf-course-card"><div class="wf-course-badge" style="background:var(--red-soft);color:var(--red)">법정 의무</div><div class="wf-course-title">개인정보보호 교육</div><div class="wf-course-meta">📅 2026.05.20 · 📍 온라인</div><div class="wf-progress-wrap"><div class="wf-progress-bar" style="width:100%;background:var(--red)"></div></div><div class="wf-progress-label"><span>30/30명</span><span style="color:var(--amber)">대기 가능</span></div></div>
-      </div>
-      <div class="wf-notes">
-        <div class="wf-note"><div class="wf-note-num">①</div><div>정원 프로그레스 바로 시각화. 신청 가능(보라) / 마감 임박(주황) / 초과(빨강) 색상 구분.</div></div>
-        <div class="wf-note"><div class="wf-note-num">②</div><div>필터 칩 가로 스크롤. 탭 영역 최소 44px 확보.</div></div>
-      </div>
-    </div>
-    <div class="wf-panel" id="wf-detail">
+
 
 function copyText() {
   const txt = ['summary','tasks','flow','screens','edge'].map(p => document.getElementById('panel-'+p)?.innerText || '').join('\n\n---\n\n');
