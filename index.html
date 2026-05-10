@@ -443,24 +443,18 @@
 
     <div class="results" id="resultsPanel">
       <div class="result-tabs">
-        <div class="result-tab active" data-panel="summary" onclick="switchTab(this)">문서 요약 <span class="result-tab-count" id="cnt-summary">-</span></div>
-        <div class="result-tab" data-panel="tasks"   onclick="switchTab(this)">작업 항목 <span class="result-tab-count" id="cnt-tasks">-</span></div>
-        <div class="result-tab" data-panel="flow"    onclick="switchTab(this)">유저 플로우 <span class="result-tab-count" id="cnt-flow">-</span></div>
-        <div class="result-tab" data-panel="screens" onclick="switchTab(this)">화면 리스트 <span class="result-tab-count" id="cnt-screens">-</span></div>
-        <div class="result-tab" data-panel="edge"    onclick="switchTab(this)">엣지 케이스 <span class="result-tab-count" id="cnt-edge">-</span></div>
-        <div class="result-tab" data-panel="layout"  onclick="switchTab(this)">레이아웃 제안 <span class="result-tab-count" id="cnt-layout">-</span></div>
+        <div class="result-tab active" data-panel="summary" onclick="switchTab(this)">문서 요약</div>
+        <div class="result-tab" data-panel="tasks"   onclick="switchTab(this)">작업 항목</div>
+        <div class="result-tab" data-panel="flow"    onclick="switchTab(this)">유저 플로우</div>
+        <div class="result-tab" data-panel="screens" onclick="switchTab(this)">화면 리스트</div>
+        <div class="result-tab" data-panel="edge"    onclick="switchTab(this)">엣지 케이스</div>
+        <div class="result-tab" data-panel="layout"  onclick="switchTab(this)">레이아웃 제안</div>
       </div>
       <div class="result-body">
         <div class="result-panel active" id="panel-summary">
-          <div class="urgency-grid" id="urgency-grid">
-            <div class="urgency-card green"><div class="urgency-num" id="urgency-immediate">-</div><div class="urgency-label">즉시 착수 가능</div><div class="urgency-sub">명확한 작업</div></div>
-            <div class="urgency-card amber"><div class="urgency-num" id="urgency-clarify">-</div><div class="urgency-label">확인 필요</div><div class="urgency-sub">모호한 항목</div></div>
-            <div class="urgency-card red"><div class="urgency-num" id="urgency-traps">-</div><div class="urgency-label">주의 구간</div><div class="urgency-sub">디자인 트랩</div></div>
-          </div>
-          <div class="section-label">기능 목록</div>
           <div id="summary-cards"></div>
           <div class="critical-review-section" id="critical-review-section" style="display:none">
-            <div class="section-label">🔍 정책 리뷰</div>
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin-bottom:12px;margin-top:24px;padding-top:20px;border-top:1px solid var(--border)">정책 리뷰</div>
             <div id="review-green-block"></div>
             <div id="review-amber-block"></div>
             <div id="review-red-block"></div>
@@ -483,7 +477,6 @@
       <div class="export-bar">
         <span class="export-label">내보내기</span>
         <button class="btn btn-ghost" onclick="copyText()">📋 텍스트 복사</button>
-        <button class="btn btn-ghost" onclick="window.print()">🖨️ 인쇄</button>
       </div>
     </div>
   </div>
@@ -893,13 +886,12 @@ function renderSummary(features, cr) {
 
   // Feature cards
   document.getElementById('summary-cards').innerHTML = features.map(f => `
-    <div class="card">
-      <div class="card-header">
-        <div class="card-icon" style="background:var(--accent-soft)">${e(f.icon)||'📋'}</div>
-        <div class="card-title">${e(f.title)}</div>
-        <div style="margin-left:auto;display:flex;gap:4px">${(f.tags||[]).map(t=>`<span class="tag tag-gray">${e(t)}</span>`).join('')}</div>
+    <div style="display:flex;gap:12px;padding:14px 0;border-bottom:1px solid var(--border)">
+      <div style="font-size:20px;flex-shrink:0;margin-top:1px">${e(f.icon)||'📋'}</div>
+      <div>
+        <div style="font-size:14px;font-weight:600;margin-bottom:4px">${e(f.title)}</div>
+        <div style="font-size:13px;color:var(--text2);line-height:1.7">${e(f.desc)}</div>
       </div>
-      <div class="card-body" style="color:var(--text2);font-size:13px;line-height:1.7">${e(f.desc)}</div>
     </div>`).join('');
 
   // Critical review section
@@ -908,38 +900,35 @@ function renderSummary(features, cr) {
 
     // Green: immediate
     document.getElementById('review-green-block').innerHTML = cr.immediate?.length ? `
-      <div class="review-block green">
-        <div class="review-block-title">✅ 즉시 착수 가능 (${cr.immediate.length}건)</div>
-        ${cr.immediate.map(item => `<div class="review-item">${e(item)}</div>`).join('')}
+      <div style="margin-bottom:20px">
+        <div style="font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--green);margin-bottom:8px">✅ 즉시 착수 가능</div>
+        ${cr.immediate.map(item => `
+          <div style="display:flex;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;color:var(--text2);line-height:1.6">
+            <span style="color:var(--green);flex-shrink:0">•</span>${e(item)}
+          </div>`).join('')}
       </div>` : '';
 
     // Amber: clarifications
     document.getElementById('review-amber-block').innerHTML = cr.clarifications?.length ? `
-      <div class="review-block amber">
-        <div class="review-block-title">🔶 확인 필요 (${cr.clarifications.length}건)</div>
+      <div style="margin-bottom:20px">
+        <div style="font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--amber);margin-bottom:8px">🔶 확인 필요</div>
         ${cr.clarifications.map(c => `
-          <div class="review-item">
-            <div style="font-weight:600;margin-bottom:3px">${e(c.issue)}</div>
-            <div class="review-item-meta">
-              <span>❓ ${e(c.question)}</span>
-            </div>
-            <div class="review-item-meta" style="margin-top:2px">
-              <span style="color:var(--amber)">⚠️ 미확인 시: ${e(c.impact)}</span>
-            </div>
+          <div style="padding:10px 0;border-bottom:1px solid var(--border)">
+            <div style="font-size:13px;font-weight:600;margin-bottom:4px">${e(c.issue)}</div>
+            <div style="font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:3px">❓ ${e(c.question)}</div>
+            <div style="font-size:11px;color:var(--amber)">영향: ${e(c.impact)}</div>
           </div>`).join('')}
       </div>` : '';
 
     // Red: design traps
     document.getElementById('review-red-block').innerHTML = cr.design_traps?.length ? `
-      <div class="review-block red">
-        <div class="review-block-title">🚨 주의 구간 (${cr.design_traps.length}건)</div>
+      <div style="margin-bottom:20px">
+        <div style="font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--red);margin-bottom:8px">🚨 주의 구간</div>
         ${cr.design_traps.map(t => `
-          <div class="review-item">
-            <div style="font-weight:600;margin-bottom:3px">${e(t.area)}</div>
-            <div style="font-size:12px;color:var(--text2);margin-bottom:3px">${e(t.concern)}</div>
-            <div class="review-item-meta">
-              <span style="color:var(--red)">💥 UX 영향: ${e(t.impact)}</span>
-            </div>
+          <div style="padding:10px 0;border-bottom:1px solid var(--border)">
+            <div style="font-size:13px;font-weight:600;margin-bottom:4px">${e(t.area)}</div>
+            <div style="font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:3px">${e(t.concern)}</div>
+            <div style="font-size:11px;color:var(--red)">영향: ${e(t.impact)}</div>
           </div>`).join('')}
       </div>` : '';
   }
@@ -976,7 +965,6 @@ function renderTasks(tasks) {
             <div style="flex:1">
               <div class="task-title">${e(t.title)}</div>
               <div class="task-desc">${e(t.desc)}</div>
-              <div class="task-tags"><span class="tag ${pc(t.priority)}">${e(t.priority)}</span></div>
             </div>
           </div>`;
         }).join('')}
@@ -1005,13 +993,14 @@ function updateTaskProgress() {
 function renderFlows(flows) {
   document.getElementById('cnt-flow').textContent = flows.length;
   const nc = t => ({start:'fn-start',step:'fn-step',decision:'fn-branch','end-ok':'fn-end-ok','end-err':'fn-end-err','end-wait':'fn-end-wait'}[t]||'fn-step');
-  const nodeEl = s => {
+  const nodeEl = (s, idx) => {
     const cls = nc(s.nodeType);
-    if (s.nodeType==='decision') return `<div class="fn-diamond-wrap"><div class="fn-diamond ${cls}"><div class="fn-diamond-text">${e(s.name)}</div></div></div>`;
-    if (['start','end-ok','end-err','end-wait'].includes(s.nodeType)) return `<div class="fn-oval ${cls}">${e(s.name)}</div>`;
-    return `<div class="fn-rect ${cls}">${e(s.name)}<div style="font-size:10px;color:var(--muted);font-weight:400;margin-top:2px">${e(s.desc)}</div></div>`;
+    const num = `<div style="font-size:9px;font-weight:700;color:var(--muted);text-align:center;margin-bottom:4px">${idx+1}</div>`;
+    if (s.nodeType==='decision') return `<div class="fn-diamond-wrap">${num}<div class="fn-diamond ${cls}"><div class="fn-diamond-text">${e(s.name)}</div></div></div>`;
+    if (['start','end-ok','end-err','end-wait'].includes(s.nodeType)) return `<div style="display:flex;flex-direction:column;align-items:center">${num}<div class="fn-oval ${cls}">${e(s.name)}</div></div>`;
+    return `<div style="display:flex;flex-direction:column;align-items:center">${num}<div class="fn-rect ${cls}">${e(s.name)}</div></div>`;
   };
-  const arr = `<div class="arr-h"></div>`;
+  const arr = `<div style="display:flex;align-items:center;margin-top:18px"><div class="arr-h"></div></div>`;
   document.getElementById('flow-content').innerHTML = flows.map((f, fi) => `
     <div class="flow-section">
       <div class="flow-section-header">
@@ -1020,9 +1009,12 @@ function renderFlows(flows) {
       </div>
       <div class="flow-diagram-wrap" id="flow-diagram-${fi}">
         <button class="flow-copy-btn" onclick="copyFlowImage(${fi}, this)">📋 이미지 복사</button>
-        <div class="flow-row">${(f.steps||[]).map((s,i)=>nodeEl(s)+(i<f.steps.length-1?arr:'')).join('')}</div>
+        <div class="flow-row" style="align-items:flex-end">${(f.steps||[]).map((s,i)=>nodeEl(s,i)+(i<f.steps.length-1?arr:'')).join('')}</div>
       </div>
-      ${(f.branches||[]).length?`<div class="flow-branch-box"><div class="flow-branch-box-label">⚡ 분기 조건</div><div class="flow-branch-box-items">${f.branches.map(b=>`• ${e(b)}`).join('<br>')}</div></div>`:''}
+      <div style="margin-top:10px;display:flex;flex-direction:column;gap:5px">
+        ${(f.steps||[]).map((s,i)=>`<div style="display:flex;gap:8px;font-size:12px;color:var(--text2)"><span style="flex-shrink:0;font-weight:700;color:var(--muted);width:18px">${i+1}.</span><span><strong>${e(s.name)}</strong> — ${e(s.desc)}</span></div>`).join('')}
+      </div>
+      ${(f.branches||[]).length?`<div class="flow-branch-box" style="margin-top:10px"><div class="flow-branch-box-label">⚡ 분기 조건</div><div class="flow-branch-box-items">${f.branches.map(b=>`• ${e(b)}`).join('<br>')}</div></div>`:''}
     </div>`).join('');
 }
 
@@ -1065,7 +1057,7 @@ function renderScreens(screens) {
 
   document.getElementById('screens-content').innerHTML = Object.entries(groups).map(([cat, items]) => `
     <div class="screen-group">
-      <div class="screen-group-header">${e(cat)}</div>
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border)">${e(cat)}</div>
       <div class="screen-grid">
         ${items.map(s => `
           <div class="screen-item">
@@ -1111,7 +1103,7 @@ function renderEdge(edges) {
               <div style="flex:1">
                 <div class="edge-title">${e(ed.title)}</div>
               </div>
-              <span class="tag ${ed.catClass||'tag-gray'}">${e(ed.cat)}</span>
+              <span style="font-size:11px;color:var(--muted)">${e(ed.cat)}</span>
             </div>
             <div class="edge-desc">${e(ed.desc)}</div>
             ${ed.design_perspective ? `
