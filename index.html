@@ -874,15 +874,6 @@ const e = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(
 
 // ── Summary ──
 function renderSummary(features, cr) {
-  document.getElementById('cnt-summary').textContent = features.length;
-
-  // Urgency cards
-  const immediate = cr?.immediate?.length || 0;
-  const clarify   = cr?.clarifications?.length || 0;
-  const traps     = cr?.design_traps?.length || 0;
-  document.getElementById('urgency-immediate').textContent = immediate;
-  document.getElementById('urgency-clarify').textContent   = clarify;
-  document.getElementById('urgency-traps').textContent     = traps;
 
   // Feature cards
   document.getElementById('summary-cards').innerHTML = features.map(f => `
@@ -938,7 +929,6 @@ function renderSummary(features, cr) {
 let tasksData = [];
 function renderTasks(tasks) {
   tasksData = tasks;
-  document.getElementById('cnt-tasks').textContent = tasks.length;
 
   // Group by category
   const groups = {};
@@ -991,7 +981,6 @@ function updateTaskProgress() {
 
 // ── Flows ──
 function renderFlows(flows) {
-  document.getElementById('cnt-flow').textContent = flows.length;
   const nc = t => ({start:'fn-start',step:'fn-step',decision:'fn-branch','end-ok':'fn-end-ok','end-err':'fn-end-err','end-wait':'fn-end-wait'}[t]||'fn-step');
   const nodeEl = (s, idx) => {
     const cls = nc(s.nodeType);
@@ -1045,7 +1034,6 @@ async function copyFlowImage(fi, btn) {
 
 // ── Screens ──
 function renderScreens(screens) {
-  document.getElementById('cnt-screens').textContent = screens.length;
 
   // Group by category
   const groups = {};
@@ -1075,7 +1063,6 @@ function renderScreens(screens) {
 
 // ── Edge Cases ──
 function renderEdge(edges) {
-  document.getElementById('cnt-edge').textContent = edges.length;
 
   const order = ['critical','high','medium','low'];
   const labels = { critical:'Critical', high:'High', medium:'Medium', low:'Low' };
@@ -1118,7 +1105,6 @@ function renderEdge(edges) {
 
 // ── Layout ──
 function renderLayout() {
-  document.getElementById('cnt-layout').textContent = '5';
   document.getElementById('layout-content').innerHTML = `
     <div class="wf-section-tabs">
       <div class="wf-tab active" onclick="switchWf(this,'wf-list')">교육 목록</div>
