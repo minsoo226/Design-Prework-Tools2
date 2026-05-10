@@ -802,12 +802,18 @@ async function callClaude() {
   "layouts": [
     {
       "screen": "화면명",
-      "type": "modal|list|detail|bottomsheet|toast|card|form",
-      "components": ["상단 구성요소 설명", "중단 구성요소 설명", "하단 구성요소 설명"],
-      "states": ["상태명: 설명"],
-      "notes": ["레이아웃 설계 시 주의사항 또는 UX 제안"],
+      "type": "modal|list|detail|bottomsheet|card|form",
+      "components": ["구성요소 설명 (실제 UI 요소명 포함)"],
+      "states": ["상태명: 상태 설명"],
+      "notes": ["설계 주의사항 또는 UX 제안 (구체적으로)"],
       "wireframe": [
-        {"zone": "영역명(예: 상단바, 콘텐츠, CTA버튼)", "height": "tall|medium|short|auto", "desc": "이 영역에 표시되는 UI 요소 한줄 설명", "style": "header|content|input|button|list|divider|badge"}
+        {
+          "style": "topbar|search|filter|card|card-shared|list-item|modal-handle|modal-title|info-row|highlight-box|input|cta|tab-bar|empty|kpi-row|divider",
+          "title": "영역 주요 텍스트 (예: 화면 제목, 버튼 레이블, 카드 제목 등 실제 내용)",
+          "sub": "부제목 또는 메타정보 (선택)",
+          "badge": "배지 텍스트 (선택, 예: 공유된 글, NEW 등)",
+          "accent": "강조색 키워드: green|red|amber|blue|purple (선택)"
+        }
       ]
     }
   ],
@@ -1125,26 +1131,35 @@ function renderLayout(layouts) {
   }
 
   const typeLabel = { modal:'모달', list:'목록', detail:'상세', bottomsheet:'바텀시트', toast:'토스트', card:'카드', form:'폼' };
-  const zoneH = h => ({tall:'54px', medium:'38px', short:'26px', auto:'auto'}[h]||'34px');
-  const zoneStyle = s => ({
-    header:  'background:var(--surface3);border-bottom:1px solid var(--border2);font-weight:600;',
-    content: 'background:var(--surface2);',
-    input:   'background:var(--surface);border:1px solid var(--border);border-radius:7px;margin:5px 12px;min-height:32px;',
-    button:  'background:var(--accent);border-radius:9px;margin:6px 12px;min-height:36px;color:#fff !important;font-weight:600;justify-content:center;',
-    list:    'background:var(--surface);border-bottom:1px solid var(--border);',
-    divider: 'min-height:1px !important;height:1px;background:var(--border);padding:0;',
-    badge:   'background:var(--surface3);border-radius:5px;margin:5px 12px;min-height:26px;',
-  }[s]||'background:var(--surface2);');
+  const ac = a => ({green:'var(--green)',red:'var(--red)',amber:'var(--amber)',blue:'var(--blue)',purple:'var(--accent)'}[a]||'var(--accent)');
+  const acs = a => ({green:'var(--green-soft)',red:'var(--red-soft)',amber:'var(--amber-soft)',blue:'var(--blue-soft)',purple:'var(--accent-soft)'}[a]||'var(--accent-soft)');
+
+  const renderZone = z => {
+    const t = e(z.title||''), sub = e(z.sub||''), badge = e(z.badge||''), color = ac(z.accent), colorSoft = acs(z.accent);
+    switch(z.style) {
+      case 'topbar': return `<div class="wf-topbar"><div class="wf-icon-btn" style="font-size:11px">←</div><div style="flex:1;text-align:center"><div class="wf-topbar-title" style="font-size:13px">${t}</div>${sub?`<div class="wf-topbar-sub">${sub}</div>`:''}</div><div class="wf-icon-btn">⋯</div></div>`;
+      case 'search': return `<div class="wf-search" style="margin:8px 12px;font-size:12px">🔍 <span style="color:var(--muted)">${t||'검색'}</span></div>`;
+      case 'filter': return `<div class="wf-filter-row">${t.split(',').map((f,i)=>`<div class="wf-filter-chip${i===0?' on':''}">${f.trim()}</div>`).join('')}</div>`;
+      case 'tab-bar': return `<div class="wf-tab-bar">${t.split(',').map((tb,i)=>`<div class="wf-tab-item${i===0?' on':''}">${tb.trim()}</div>`).join('')}</div>`;
+      case 'list-item': return `<div class="wf-list-item"><div class="wf-avatar" style="background:${colorSoft};color:${color};font-size:11px;font-weight:700">${t.charAt(0)||'•'}</div><div style="flex:1"><div class="wf-list-title">${t}</div>${sub?`<div class="wf-list-sub">${sub}</div>`:''}</div>${badge?`<div class="wf-badge" style="background:${colorSoft};color:${color}">${badge}</div>`:''}</div>`;
+      case 'card': return `<div class="wf-course-card">${badge?`<div class="wf-course-badge" style="background:${colorSoft};color:${color}">${badge}</div>`:''}<div class="wf-course-title">${t}</div>${sub?`<div class="wf-course-meta">${sub}</div>`:''}</div>`;
+      case 'card-shared': return `<div style="margin:0 12px 8px;border-radius:10px;border:1px solid var(--border);background:var(--surface);overflow:hidden"><div style="padding:10px 12px;border-left:3px solid ${color}"><div style="font-size:9px;font-weight:700;color:${color};margin-bottom:5px">${badge||'공유된 글'}</div><div style="font-size:12px;font-weight:600;margin-bottom:3px">${t}</div>${sub?`<div style="font-size:11px;color:var(--muted)">${sub}</div>`:''}</div></div>`;
+      case 'modal-handle': return `<div style="padding:12px 0 6px;display:flex;justify-content:center"><div class="wf-modal-handle"></div></div>`;
+      case 'modal-title': return `<div style="padding:4px 16px 8px"><div class="wf-modal-title" style="font-size:14px">${t}</div>${sub?`<div style="font-size:11px;color:var(--muted)">${sub}</div>`:''}</div>`;
+      case 'info-row': return `<div class="wf-info-row" style="margin:0 16px"><span class="wf-info-label">${t}</span><span style="font-size:12px;font-weight:500">${sub}</span></div>`;
+      case 'highlight-box': return `<div style="margin:6px 12px;padding:9px 12px;border-radius:8px;background:${colorSoft};border:1px solid ${color}30;font-size:12px;color:${color};font-weight:500">${t}</div>`;
+      case 'input': return `<div style="margin:6px 12px;padding:9px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;font-size:12px;color:var(--muted)">${t||'입력하세요'}</div>`;
+      case 'cta': return `<div style="margin:8px 12px;padding:11px;border-radius:10px;background:${color};color:#fff;font-size:13px;font-weight:600;text-align:center">${t}</div>`;
+      case 'kpi-row': return `<div class="wf-kpi-row">${t.split(',').map(k=>{const[label,val]=(k+'|').split('|');return`<div class="wf-kpi-card"><div class="wf-kpi-num" style="color:${color};font-size:16px">${val?.trim()||'-'}</div><div class="wf-kpi-label">${label.trim()}</div></div>`;}).join('')}</div>`;
+      case 'empty': return `<div style="padding:20px 16px;text-align:center;color:var(--muted);font-size:12px">${t}</div>`;
+      case 'divider': return `<div class="wf-divider"></div>`;
+      default: return `<div style="padding:10px 14px;font-size:12px;color:var(--text2);background:var(--surface2)">${t}${sub?`<div style="font-size:11px;color:var(--muted);margin-top:2px">${sub}</div>`:''}</div>`;
+    }
+  };
 
   const buildFrame = (wf) => {
-    if (!wf || wf.length === 0) return `<div class="wf-frame" style="max-width:280px"><div style="padding:20px;font-size:12px;color:var(--muted);text-align:center">시안 없음</div></div>`;
-    return `
-      <div class="wf-frame" style="max-width:280px">
-        ${wf.map(z => `
-          <div style="min-height:${zoneH(z.height)};${zoneStyle(z.style)}display:flex;align-items:center;padding:0 14px;gap:8px;box-sizing:border-box;width:100%;">
-            <div style="font-size:11px;color:var(--text2);line-height:1.4;flex:1">${e(z.desc)}</div>
-          </div>`).join('')}
-      </div>`;
+    if (!wf || wf.length === 0) return `<div class="wf-frame" style="max-width:300px"><div style="padding:24px;font-size:12px;color:var(--muted);text-align:center">시안 없음</div></div>`;
+    return `<div class="wf-frame" style="max-width:300px">${wf.map(renderZone).join('')}</div>`;
   };
 
   const tabs = layouts.map((l, i) => `<div class="wf-tab ${i===0?'active':''}" onclick="switchWfDyn(this,'wf-dyn-${i}')">${e(l.screen)}</div>`).join('');
