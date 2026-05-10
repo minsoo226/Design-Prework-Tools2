@@ -1125,66 +1125,61 @@ function renderLayout(layouts) {
   }
 
   const typeLabel = { modal:'모달', list:'목록', detail:'상세', bottomsheet:'바텀시트', toast:'토스트', card:'카드', form:'폼' };
-  const zoneH = h => ({tall:'56px', medium:'40px', short:'28px', auto:'auto'}[h]||'36px');
+  const zoneH = h => ({tall:'54px', medium:'38px', short:'26px', auto:'auto'}[h]||'34px');
   const zoneStyle = s => ({
-    header:  'background:var(--surface3);border-bottom:1px solid var(--border2);',
+    header:  'background:var(--surface3);border-bottom:1px solid var(--border2);font-weight:600;',
     content: 'background:var(--surface2);',
-    input:   'background:var(--surface);border:1px dashed var(--border2);border-radius:6px;margin:6px 10px;',
-    button:  'background:var(--accent-soft);border:1px solid rgba(97,85,224,0.3);border-radius:8px;margin:6px 10px;',
+    input:   'background:var(--surface);border:1px solid var(--border);border-radius:7px;margin:5px 12px;min-height:32px;',
+    button:  'background:var(--accent);border-radius:9px;margin:6px 12px;min-height:36px;color:#fff !important;font-weight:600;justify-content:center;',
     list:    'background:var(--surface);border-bottom:1px solid var(--border);',
-    divider: 'background:var(--border);height:1px !important;min-height:1px;',
-    badge:   'background:var(--surface3);border-radius:4px;margin:4px 10px;',
+    divider: 'min-height:1px !important;height:1px;background:var(--border);padding:0;',
+    badge:   'background:var(--surface3);border-radius:5px;margin:5px 12px;min-height:26px;',
   }[s]||'background:var(--surface2);');
 
-  const buildWireframe = (wf) => {
-    if (!wf || wf.length === 0) return '';
+  const buildFrame = (wf) => {
+    if (!wf || wf.length === 0) return `<div class="wf-frame" style="max-width:280px"><div style="padding:20px;font-size:12px;color:var(--muted);text-align:center">시안 없음</div></div>`;
     return `
-      <div style="margin-bottom:18px">
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin-bottom:10px">레이아웃 시안</div>
-        <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:var(--shadow);max-width:320px">
-          ${wf.map(z => `
-            <div style="min-height:${zoneH(z.height)};${zoneStyle(z.style)}display:flex;align-items:center;padding:0 14px;position:relative;">
-              <div style="font-size:11px;color:var(--muted);line-height:1.4">${e(z.desc)}</div>
-              ${z.zone ? `<div style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:9px;font-weight:700;color:var(--border2);text-transform:uppercase;letter-spacing:0.04em">${e(z.zone)}</div>` : ''}
-            </div>`).join('')}
-        </div>
+      <div class="wf-frame" style="max-width:280px">
+        ${wf.map(z => `
+          <div style="min-height:${zoneH(z.height)};${zoneStyle(z.style)}display:flex;align-items:center;padding:0 14px;gap:8px;box-sizing:border-box;width:100%;">
+            <div style="font-size:11px;color:var(--text2);line-height:1.4;flex:1">${e(z.desc)}</div>
+          </div>`).join('')}
       </div>`;
   };
 
   const tabs = layouts.map((l, i) => `<div class="wf-tab ${i===0?'active':''}" onclick="switchWfDyn(this,'wf-dyn-${i}')">${e(l.screen)}</div>`).join('');
   const panels = layouts.map((l, i) => `
     <div class="wf-panel ${i===0?'active':''}" id="wf-dyn-${i}">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">
-        <span style="font-size:13px;font-weight:600">${e(l.screen)}</span>
-        ${l.type ? `<span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:4px;background:var(--accent-soft);color:var(--accent2)">${typeLabel[l.type]||e(l.type)}</span>` : ''}
-      </div>
-      <div style="display:grid;grid-template-columns:auto 1fr;gap:24px;align-items:start">
-        <div>${buildWireframe(l.wireframe)}</div>
-        <div>
+      <div style="display:flex;gap:24px;align-items:flex-start">
+        ${buildFrame(l.wireframe)}
+        <div style="flex:1;min-width:0">
+          ${l.type ? `<div style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:4px;background:var(--accent-soft);color:var(--accent2);display:inline-block;margin-bottom:12px">${typeLabel[l.type]||e(l.type)}</div>` : ''}
           ${(l.components||[]).length ? `
-            <div style="margin-bottom:16px">
+            <div style="margin-bottom:14px">
               <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin-bottom:8px">구성 요소</div>
               ${l.components.map((c,ci) => `
-                <div style="display:flex;gap:10px;padding:8px 0;${ci<l.components.length-1?'border-bottom:1px solid var(--border);':''}font-size:13px;color:var(--text2)">
+                <div style="display:flex;gap:10px;padding:7px 0;${ci<l.components.length-1?'border-bottom:1px solid var(--border);':''}font-size:13px;color:var(--text2);line-height:1.5">
                   <span style="font-size:10px;font-weight:700;color:var(--accent);flex-shrink:0;margin-top:2px;width:14px">${ci+1}</span>
                   <span>${e(c)}</span>
                 </div>`).join('')}
             </div>` : ''}
           ${(l.states||[]).length ? `
-            <div style="margin-bottom:16px">
+            <div style="margin-bottom:14px">
               <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin-bottom:8px">화면 상태</div>
               <div style="display:flex;flex-wrap:wrap;gap:6px">
                 ${l.states.map(s=>`<span style="padding:4px 12px;border-radius:20px;font-size:12px;background:var(--surface2);border:1px solid var(--border);color:var(--text2)">${e(s)}</span>`).join('')}
               </div>
             </div>` : ''}
-          ${(l.notes||[]).length ? `
-            <div>
-              <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin-bottom:8px">설계 메모</div>
-              ${l.notes.map(n => `
-                <div style="padding:8px 12px;border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 7px 7px 0;margin-bottom:6px;font-size:12px;color:var(--text2);line-height:1.6">${e(n)}</div>`).join('')}
-            </div>` : ''}
         </div>
       </div>
+      ${(l.notes||[]).length ? `
+        <div class="wf-notes" style="margin-top:14px">
+          ${l.notes.map((n,ni) => `
+            <div class="wf-note">
+              <div class="wf-note-num">${['①','②','③','④','⑤','⑥'][ni]||ni+1}</div>
+              <div>${e(n)}</div>
+            </div>`).join('')}
+        </div>` : ''}
     </div>`).join('');
 
   document.getElementById('layout-content').innerHTML = `
